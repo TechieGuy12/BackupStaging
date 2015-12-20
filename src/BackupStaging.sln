@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+# SharpDevelop 4.4
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControlPanel", "ControlPanel\ControlPanel.csproj", "{77207B61-BF48-44DC-849B-FE947D485116}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StagingService", "StagingService\StagingService.csproj", "{3732C9E7-2AAF-4064-A62D-94DF8B3858E3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{77207B61-BF48-44DC-849B-FE947D485116}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77207B61-BF48-44DC-849B-FE947D485116}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77207B61-BF48-44DC-849B-FE947D485116}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77207B61-BF48-44DC-849B-FE947D485116}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3732C9E7-2AAF-4064-A62D-94DF8B3858E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3732C9E7-2AAF-4064-A62D-94DF8B3858E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3732C9E7-2AAF-4064-A62D-94DF8B3858E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3732C9E7-2AAF-4064-A62D-94DF8B3858E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+EndGlobal

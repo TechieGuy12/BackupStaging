@@ -1,0 +1,5 @@
+C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\obj\Debug\ControlPanel.csprojResolveAssemblyReference.cache
+C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\bin\Debug\ControlPanel.exe
+C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\bin\Debug\ControlPanel.pdb
+C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\obj\Debug\ControlPanel.exe
+C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\obj\Debug\ControlPanel.pdb

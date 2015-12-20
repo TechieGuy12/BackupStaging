@@ -1,0 +1,23 @@
+﻿Installing assembly 'C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.exe'.
+Affected parameters are:
+   i = 
+   logfile = C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.InstallLog
+   assemblypath = C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.exe
+   logtoconsole = 
+Installing service Backup Staging Manager...
+Service Backup Staging Manager has been successfully installed.
+Creating EventLog source Backup Staging Manager in log Application...
+Committing assembly 'C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.exe'.
+Affected parameters are:
+   i = 
+   logfile = C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.InstallLog
+   assemblypath = C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.exe
+   logtoconsole = 
+Uninstalling assembly 'C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.exe'.
+Affected parameters are:
+   logtoconsole = 
+   logfile = C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.InstallLog
+   assemblypath = C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.exe
+Removing EventLog source Backup Staging Manager.
+Service Backup Staging Manager is being removed from the system...
+Service Backup Staging Manager was successfully removed from the system.
