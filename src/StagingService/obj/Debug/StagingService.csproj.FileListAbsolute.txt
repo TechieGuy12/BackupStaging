@@ -4,3 +4,9 @@ C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\D
 C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\bin\Debug\StagingService.pdb
 C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\obj\Debug\StagingService.exe
 C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\StagingService\obj\Debug\StagingService.pdb
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\StagingService\obj\Debug\StagingService.csprojResolveAssemblyReference.cache
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\StagingService\obj\Debug\StagingService.exe
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\StagingService\obj\Debug\StagingService.pdb
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\StagingService\bin\Debug\StagingService.exe.config
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\StagingService\bin\Debug\StagingService.exe
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\StagingService\bin\Debug\StagingService.pdb

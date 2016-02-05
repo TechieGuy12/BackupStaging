@@ -3,3 +3,10 @@ C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\bin\Deb
 C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\bin\Debug\ControlPanel.pdb
 C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\obj\Debug\ControlPanel.exe
 C:\Users\Paul\Documents\SharpDevelop Projects\BackupStaging\ControlPanel\obj\Debug\ControlPanel.pdb
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\ControlPanel\obj\Debug\ControlPanel.csprojResolveAssemblyReference.cache
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\ControlPanel\obj\Debug\TE.Apps.Staging.MainForm.resources
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\ControlPanel\obj\Debug\ControlPanel.csproj.GenerateResource.Cache
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\ControlPanel\obj\Debug\ControlPanel.exe
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\ControlPanel\obj\Debug\ControlPanel.pdb
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\ControlPanel\bin\Debug\ControlPanel.exe
+C:\Users\Paul\Documents\GitHub\BackupStaging\src\ControlPanel\bin\Debug\ControlPanel.pdb

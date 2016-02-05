@@ -7,8 +7,9 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 using System;
+using System.Collections.Generic;
 
-namespace  TE.Apps.Staging
+namespace TE.Apps.Staging
 {
 	/// <summary>
 	/// Information about the settings used by the service.
@@ -16,15 +17,20 @@ namespace  TE.Apps.Staging
 	public class SettingsFile
 	{
 		#region Properties
-		/// <summary>
-		/// Gets or sets the source directory.
-		/// </summary>
-		public string SourceDirectory { get; set; }
+//		/// <summary>
+//		/// Gets or sets the source directory.
+//		/// </summary>
+//		public string SourceDirectory { get; set; }
+//		
+//		/// <summary>
+//		/// Gets or set the destination directory.
+//		/// </summary>
+//		public string DestinationDirectory { get; set; }
 		
 		/// <summary>
-		/// Gets or set the destination directory.
+		/// Gets or sets the list of source and destination locations.
 		/// </summary>
-		public string DestinationDirectory { get; set; }
+		public List<Location> Locations { get; set; }
 		
 		/// <summary>
 		/// Gets or sets the file move retry count.
@@ -54,6 +60,7 @@ namespace  TE.Apps.Staging
 		/// </summary>
 		private void Initialize()
 		{
+			this.Locations = new List<Location>();
 			this.MoveRetryCount = 5;
 			this.MoveRetryWait = 30;
 		}

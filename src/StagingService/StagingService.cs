@@ -38,36 +38,37 @@ namespace TE.Apps.Staging
 		/// <summary>
 		/// The settings used for the service.
 		/// </summary>
-		private SettingsFile _settings;		
+		private SettingsFile settingsFile;		
 		/// <summary>
 		/// The FileSystemWatcher that monitors the source directory.
 		/// </summary>
-		private FileSystemWatcher _watcher;
+		private FileSystemWatcher watcher;
 		/// <summary>
 		/// The timer used to cleanup the source directory.
 		/// </summary>
-		private System.Timers.Timer _timer;
+		private System.Timers.Timer timer;
 		/// <summary>
 		/// The queue that will contain the files to be moved.
 		/// </summary>
-		private Queue _stagingFilesQueue;
+		private Queue stagingFilesQueue;
 		/// <summary>
 		/// The background worker that performs the file moves.
 		/// </summary>
-		private BackgroundWorker _bg;
+		private BackgroundWorker bg;
 		#endregion
 		
 		#region Properties
-		/// <summary>
-		/// Gets or sets the source staging directory.
-		/// </summary>
-		public string SourceFolder { get; set; }
+//		/// <summary>
+//		/// Gets or sets the source staging directory.
+//		/// </summary>
+//		public string SourceFolder { get; set; }
+//		
+//		/// <summary>
+//		/// Gets or sets the destination directory.
+//		/// </summary>
+//		public string DestinationFolder { get; set; }
 		
-		/// <summary>
-		/// Gets or sets the destination directory.
-		/// </summary>
-		public string DestinationFolder { get; set; }
-		
+		public List<Location> FileLocations { get; set; }
 		/// <summary>
 		/// Gets or sets the copy retry count.
 		/// </summary>
@@ -92,19 +93,19 @@ namespace TE.Apps.Staging
 		/// </summary>
 		private void Deinitialize()
 		{			
-			this._bg.CancelAsync();
-			this._bg.Dispose();
+			this.bg.CancelAsync();
+			this.bg.Dispose();
 			
-			this._timer.Enabled = false;
-			this._timer.Close();
-			this._timer.Dispose();
+			this.timer.Enabled = false;
+			this.timer.Close();
+			this.timer.Dispose();
 			
-			this._watcher.EnableRaisingEvents = false;
-			this._watcher.Dispose();
+			this.watcher.EnableRaisingEvents = false;
+			this.watcher.Dispose();
 			
-			this._bg = null;
-			this._timer = null;
-			this._watcher = null;
+			this.bg = null;
+			this.timer = null;
+			this.watcher = null;
 		}
 		
 		/// <summary>
@@ -118,7 +119,7 @@ namespace TE.Apps.Staging
 		/// </returns>
 		private SettingsFile DeserializeSettings(string settingsFilePath)
 		{
-			XmlSerializer xs = new XmlSerializer (typeof(SettingsFile));		
+			XmlSerializer xs = new XmlSerializer(typeof(SettingsFile));		
 			
 			using (Stream s = File.OpenRead(settingsFilePath))
 			{
@@ -140,8 +141,14 @@ namespace TE.Apps.Staging
 			{
 				// Create some default values if the settings file doesn't exist
 				SettingsFile settings = new SettingsFile();
-				settings.SourceDirectory = string.Empty;
-				settings.DestinationDirectory = string.Empty;
+				
+				Location location =	new Location("C:\\", "C:\\");				
+				List<Location> locations = new List<Location>();
+				locations.Add(location);
+				
+				settings.Locations = locations;
+				//settings.SourceDirectory = string.Empty;
+				//settings.DestinationDirectory = string.Empty;
 				settings.MoveRetryCount = 5;
 				settings.MoveRetryWait = 30;
 				
@@ -158,46 +165,48 @@ namespace TE.Apps.Staging
 		/// </summary>
 		private void Initialize()
 		{
-			this._settings = new SettingsFile();
-			this._settings = this.GetSettings();
+			this.settingsFile = new SettingsFile();
+			this.settingsFile = this.GetSettings();
 			
 			// Initialize the properties
-			this.SourceFolder = this._settings.SourceDirectory;
-			this.DestinationFolder = this._settings.DestinationDirectory;
-			this.RetryMoveCount = this._settings.MoveRetryCount;
-			this.RetryMoveWait = this._settings.MoveRetryWait;
+//			this.SourceFolder = this.settingsFile.SourceDirectory;
+//			this.DestinationFolder = this.settingsFile.DestinationDirectory;
+			
+			this.FileLocations = this.settingsFile.Locations;
+			this.RetryMoveCount = this.settingsFile.MoveRetryCount;
+			this.RetryMoveWait = this.settingsFile.MoveRetryWait;
 			
 			// Initialize the file move queue
-			this._stagingFilesQueue = new Queue();
+			this.stagingFilesQueue = new Queue();
 			
 			// Initialize the BackgroundWorker object that will perform the
 			// moving of the staging files
-			this._bg = new BackgroundWorker();			
-			this._bg.WorkerSupportsCancellation = true;
-			this._bg.DoWork += new DoWorkEventHandler(MoveStagingFiles);
-			this._bg.RunWorkerAsync();
+			this.bg = new BackgroundWorker();			
+			this.bg.WorkerSupportsCancellation = true;
+			this.bg.DoWork += new DoWorkEventHandler(MoveStagingFiles);
+			this.bg.RunWorkerAsync();
 
 			// Initialize the timer that will cleanup any empty directories
 			// in the staging directory
-			this._timer = new System.Timers.Timer();
-			this._timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-			this._timer.Interval = 10000;
-			this._timer.Enabled = true;			
+			this.timer = new System.Timers.Timer();
+			this.timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+			this.timer.Interval = 10000;
+			this.timer.Enabled = true;			
 			
 			// Initialize the FileSystemWatcher object to watch the staging
 			// directory for changes
-			this._watcher = new FileSystemWatcher();
-			this._watcher.Path = this.SourceFolder;
-			this._watcher.IncludeSubdirectories = true;
-			this._watcher.NotifyFilter = 
+			this.watcher = new FileSystemWatcher();
+			this.watcher.Path = ((Location)this.FileLocations[0]).Source;
+			this.watcher.IncludeSubdirectories = true;
+			this.watcher.NotifyFilter = 
 				NotifyFilters.LastAccess | 
 				NotifyFilters.LastWrite | 
 				NotifyFilters.FileName | 
 				NotifyFilters.DirectoryName;
-			this._watcher.Filter = "*.*";
-			this._watcher.Changed += new FileSystemEventHandler(this.OnChanged);
-			this._watcher.Created += new FileSystemEventHandler(this.OnChanged);
-			this._watcher.EnableRaisingEvents = true;		
+			this.watcher.Filter = "*.*";
+			this.watcher.Changed += new FileSystemEventHandler(this.OnChanged);
+			this.watcher.Created += new FileSystemEventHandler(this.OnChanged);
+			this.watcher.EnableRaisingEvents = true;		
 		}
 
 		/// <summary>
@@ -211,9 +220,18 @@ namespace TE.Apps.Staging
 		/// <summary>
 		/// Process the directories and deletes any directories that contain no
 		/// files and haven't been written to in 10 minutes.
-		/// </summary>		
+		/// </summary>
+		/// <exception cref="System.ArgumentNullException">
+		/// Thrown when the start location path is null or empty.
+		/// </exception>
 		private static void ProcessDirectory(string startLocation)
 		{
+			
+			if (string.IsNullOrEmpty(startLocation))
+			{
+				throw new ArgumentNullException(startLocation);
+			}
+			
 			foreach (var directory in Directory.GetDirectories(startLocation))
 			{
 				ProcessDirectory(directory);
@@ -241,73 +259,42 @@ namespace TE.Apps.Staging
 		/// </summary>
 		private void MoveStagingFiles(object sender, DoWorkEventArgs e)
 		{
-			while (!this._bg.CancellationPending)
+			if (this.bg == null || this.stagingFilesQueue == null)
 			{
-				if (this._stagingFilesQueue.Count > 0)
+				return;
+			}
+			
+			while (!this.bg.CancellationPending)
+			{
+				if (this.stagingFilesQueue.Count > 0)
 				{				
-					while (this._stagingFilesQueue.Count != 0)
+					while (this.stagingFilesQueue.Count != 0)
 					{	
 						// Get the next file in the queue
 						StagingFile stagingFile = 
-							(StagingFile)this._stagingFilesQueue.Dequeue();
+							(StagingFile)this.stagingFilesQueue.Dequeue();
 						
-						// Check to see if the file exists before attempting to
-						// move it to the destination
-						if (File.Exists(stagingFile.SourcePath))
-						{					
-							string destinationDir = 
-								Path.GetDirectoryName(stagingFile.DestinationPath);
-							
-							// If the destination directory doesn't exist, create
-							// create it to avoid any exceptions						
-							if (!Directory.Exists(destinationDir))
+						int i = 0;					
+						while (i < this.RetryMoveCount)
+						{						
+							try
 							{
-								Directory.CreateDirectory(destinationDir);
+								stagingFile.Move();
+								i = this.RetryMoveCount;
 							}
-				
-							int i = 0;					
-							while (i < this.RetryMoveCount)
+							catch (IOException)
 							{
-								try
+								// Wait for a specified number of milliseconds
+								// and then increment the retry counter
+								Thread.Sleep(this.RetryMoveWait * 1000);
+								i++;
+								
+								// If the retry copy count reaches the limit,
+								// then re-enqueue the file to try again later
+								if (i == this.RetryMoveCount)
 								{
-									// Check to see if the file exists in the
-									// destination location
-									if (File.Exists(stagingFile.DestinationPath))
-									{
-										// Copy the file, overwriting the destination
-										// file and then delete the source file to
-										// simulate a move
-										File.Copy(
-											stagingFile.SourcePath, 
-											stagingFile.DestinationPath, 
-											true);
-										File.Delete(stagingFile.SourcePath);
-									}
-									else
-									{
-										// Move the file to the destination
-										File.Move(
-											stagingFile.SourcePath,
-											stagingFile.DestinationPath);
-									}
-									
-									i = this.RetryMoveCount;
-									
-								}
-								catch (IOException)
-								{
-									// Wait for a specified number of milliseconds
-									// and then increment the retry counter
-									Thread.Sleep(this.RetryMoveWait * 1000);
-									i++;
-									
-									// If the retry copy count reaches the limit,
-									// then re-enqueue the file to try again later
-									if (i == this.RetryMoveCount)
-									{
-										this._stagingFilesQueue.Enqueue(stagingFile);
-									}								
-								}
+									this.stagingFilesQueue.Enqueue(stagingFile);
+								}								
 							}
 						}
 					}
@@ -330,7 +317,15 @@ namespace TE.Apps.Staging
 		private void SaveSettings(SettingsFile settings)
 		{
 			string settingsFilePath = GetSettingsFilePath();
+			
+			if (string.IsNullOrEmpty(settingsFilePath))
+			{
+				throw new Exception(
+					"The settings file path could not be determined.");
+			}
+			
 			this.SerializeSettings(settingsFilePath, settings);
+
 		}
 		
 		/// <summary>
@@ -344,11 +339,18 @@ namespace TE.Apps.Staging
 		/// </param>
 		private void SerializeSettings(string settingsFilePath, SettingsFile settings)
 		{
-			XmlSerializer xs = new XmlSerializer (typeof(SettingsFile));
-			
-			using (Stream s = File.OpenWrite(settingsFilePath))
+			try
 			{
-				xs.Serialize (s, settings);
+				XmlSerializer xs = new XmlSerializer(typeof(SettingsFile));
+				
+				using (Stream s = File.OpenWrite(settingsFilePath))
+				{
+					xs.Serialize(s, settings);
+				}
+			}
+			catch
+			{
+				throw;
 			}
 		}
 		
@@ -364,7 +366,7 @@ namespace TE.Apps.Staging
 				Environment.GetFolderPath(
 					Environment.SpecialFolder.CommonApplicationData);
 			
-			if (!appDataDirectory.EndsWith(@"\"))
+			if (!appDataDirectory.EndsWith(@"\", StringComparison.OrdinalIgnoreCase))
 		    {
 		    	appDataDirectory += @"\";
 		    }
@@ -413,14 +415,36 @@ namespace TE.Apps.Staging
 			{
 				if (File.Exists(e.FullPath))
 				{
+					// Store both the source and destination paths
+					string sourcePath = 
+						((Location)this.FileLocations[0]).Source;
 					string destinationPath = 
+						((Location)this.FileLocations[0]).Destination;
+					
+					// Get the list of folder name replacements
+					List<Replacement> replacements = 
+						((Location)this.FileLocations[0]).Replacements;
+					
+					// Create the new file path but substituting the source
+					// folder with the destination folder
+					string newPath = 
 						e.FullPath.Replace(
-							this.SourceFolder,
-							this.DestinationFolder);
-
-					this._stagingFilesQueue.Enqueue(new StagingFile(
+							sourcePath,
+							destinationPath);
+					
+					// Loop through the replacement folder names and replace any
+					// source folders names with the destination folder names					
+					foreach (Replacement replacement in replacements)
+					{
+						newPath = newPath.Replace(
+							replacement.SourceName,
+							replacement.DestinationName);
+					}
+					
+					// Enqueue the file to be moved
+					this.stagingFilesQueue.Enqueue(new StagingFile(
 						e.FullPath,
-						destinationPath));
+						newPath));
 				}
 			}
 		}
@@ -455,7 +479,7 @@ namespace TE.Apps.Staging
 		/// </param>
 		private void OnTimedEvent(object source, ElapsedEventArgs e)
 		{
-			ProcessDirectory(this.SourceFolder);
+			ProcessDirectory(((Location)this.FileLocations[0]).Source);
 		}				
 		#endregion
 	}
