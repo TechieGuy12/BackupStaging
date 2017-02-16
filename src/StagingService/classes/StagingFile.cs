@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace TE.Apps.Staging
 {
@@ -8,79 +10,16 @@ namespace TE.Apps.Staging
 	/// </summary>
 	public class StagingFile
 	{
-		#region Private Variables
-		/// <summary>
-		/// The source path.
-		/// </summary>
-		private string _sourcePath;
-		/// <summary>
-		/// The destination path.
-		/// </summary>
-		private string _destinationPath;
-		#endregion
-		
 		#region Properties
 		/// <summary>
-		/// Gets or sets the source path.
+		/// Gets the source path.
 		/// </summary>
-		/// <exception cref="System.ArgumentNullException">
-		/// Thrown when the source path is null.
-		/// </exception>
-		/// <exception cref="System.ArgumentException">
-		/// Thrown when the source path is empty.
-		/// </exception>
-		public string SourcePath
-		{
-			get
-			{
-				return this._sourcePath;	
-			}
-			set
-			{
-				if (value == null)
-				{
-					throw new ArgumentNullException(value);
-				}
-				
-				if (value.Trim().Length == 0)
-				{
-					throw new ArgumentException(
-						"The source path is empty.");
-				}
-				this._sourcePath = value;
-			}
-		}
+		public string SourcePath { get; private set; }
 		
 		/// <summary>
-		/// Gets or sets the destination path.
+		/// Gets the destination path.
 		/// </summary>
-		/// <exception cref="System.ArgumentNullException">
-		/// Thrown when the destination path is null.
-		/// </exception>
-		/// <exception cref="System.ArgumentException">
-		/// Thrown when the destination path is empty.
-		/// </exception>
-		public string DestinationPath
-		{
-			get
-			{
-				return this._destinationPath;	
-			}
-			set
-			{
-				if (value == null)
-				{
-					throw new ArgumentNullException(value);
-				}
-				
-				if (value.Trim().Length == 0)
-				{
-					throw new ArgumentException(
-						"The destination path is empty.");
-				}
-				this._destinationPath = value;
-			}
-		}			
+		public string DestinationPath { get; private set; }			
 		#endregion
 		
 		#region Constructors
@@ -95,25 +34,106 @@ namespace TE.Apps.Staging
 		/// [in] The destination path of the file.
 		/// </param>
 		/// <exception cref="System.ArgumentNullException">
-		/// Thrown when a path is null.
-		/// </exception>
-		/// <exception cref="System.ArgumentException">
-		/// Thrown when a path is empty.
+		/// Thrown when a path is null or empty.
 		/// </exception>
 		public StagingFile(string sourcePath, string destinationPath)
 		{
-			try
+			if (string.IsNullOrEmpty(sourcePath))
 			{
-				this.SourcePath = sourcePath;
-				this.DestinationPath = destinationPath;
+				throw new ArgumentNullException(
+					sourcePath,
+					"The source path parameter cannot be null.");
 			}
-			catch
+			
+			if (string.IsNullOrEmpty(destinationPath))
 			{
-				throw;
+				throw new ArgumentNullException(
+					destinationPath,
+					"The destination path parameter cannot be null.");
 			}
+			
+			SourcePath = sourcePath;
+			DestinationPath = destinationPath;
 		}
 		#endregion
 		
+        /// <summary>
+        /// Gets the unique hash that represents the full path of the file.
+        /// </summary>
+        /// <param name="filePath">
+        /// The full path of the file to be hashed.
+        /// </param>
+        /// <returns>
+        /// The SHA256 hash of the path or a null string if no hash could be
+        /// generated.
+        /// </returns>
+        private string GetFilePathHash(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                return null;
+            }
+
+            using (var sha = new SHA256CryptoServiceProvider())
+            {
+                // Set the encoding to UTF8 and computer the hash
+                Encoding enc = Encoding.UTF8;
+                byte[] hash = sha.ComputeHash(enc.GetBytes(filePath));
+
+                // Verify the hash length is greater than zero, otherwise
+                // return a null string
+                if (hash.Length > 0)
+                {
+                    // Return the file hash
+                    return BitConverter.ToString(hash).Replace("-", string.Empty);;
+                }
+                else
+                {
+                    return null;
+                }
+
+            }
+        }
+        
+        /// <summary>
+        /// Checks to see if the file hash for a source and destination file
+        /// are the equal.
+        /// </summary>
+        /// <param name="source">
+        /// The full path to the source file.
+        /// </param>
+        /// <param name="destination">
+        /// The full path to the destination file.
+        /// </param>
+        /// <returns>
+        /// True if the file hashes are the same, false if they are not the
+        /// same.
+        /// </returns>
+        private bool IsHashesEqual(string source, string destination)
+        {
+        	// If either the source or destination parameters are null or
+        	// empty, then return false
+        	if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(destination))
+        	{
+        		return false;
+        	}
+        	
+        	// If either the source or destination files don't exist, then
+        	// return false
+        	if (!File.Exists(source) || !File.Exists(destination))
+        	{
+        		return false;
+        	}
+        	
+        	// Get the source and destination hashes
+        	string sourceHash = GetFilePathHash(source);
+        	string destinationHash = GetFilePathHash(destination);
+        	
+        	// Return the value indicating if the source and destination hashes
+        	// are equal
+        	return sourceHash.Equals(destinationHash);
+        }
+        
 		#region Public Functions
 		/// <summary>
 		/// Moves the file from the source directory to the destination
@@ -137,26 +157,18 @@ namespace TE.Apps.Staging
 	
 				try
 				{
-					// Check to see if the file exists in the
-					// destination location
-					if (File.Exists(this.DestinationPath))
+					// Copy the file, overwriting the destination
+					// file and then delete the source file to
+					// simulate a move
+					File.Copy(
+						SourcePath, 
+						DestinationPath, 
+						true);
+					
+					if (IsHashesEqual(SourcePath, DestinationPath))
 					{
-						// Copy the file, overwriting the destination
-						// file and then delete the source file to
-						// simulate a move
-						File.Copy(
-							this.SourcePath, 
-							this.DestinationPath, 
-							true);
-						File.Delete(this.SourcePath);
+						File.Delete(SourcePath);										
 					}
-					else
-					{
-						// Move the file to the destination
-						File.Move(
-							this.SourcePath,
-							this.DestinationPath);
-					}													
 				}
 				catch
 				{
@@ -165,5 +177,6 @@ namespace TE.Apps.Staging
 			}			
 		}
 		#endregion
+		
 	}
 }
