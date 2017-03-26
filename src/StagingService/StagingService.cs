@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
 using System.Xml.Serialization;
 
@@ -31,10 +33,14 @@ namespace TE.Apps.Staging
 		/// <summary>
 		/// The name of the settings file.
 		/// </summary>
-		private const string SettingsFileName = "settings.xml";		
-		#endregion
-		
-		#region Private Variables
+		private const string SettingsFileName = "settings.xml";
+        #endregion
+
+        #region Private Variables
+        /// <summary>
+        /// The number of threads to use to move the files.
+        /// </summary>
+        private int threads;
 		/// <summary>
 		/// The settings used for the service.
 		/// </summary>
@@ -50,7 +56,7 @@ namespace TE.Apps.Staging
 		/// <summary>
 		/// The queue that will contain the files to be moved.
 		/// </summary>
-		private Queue stagingFilesQueue;
+		private ConcurrentQueue<StagingFile> stagingFilesQueue;
 		/// <summary>
 		/// The background worker that performs the file moves.
 		/// </summary>
@@ -93,19 +99,19 @@ namespace TE.Apps.Staging
 		/// </summary>
 		private void Deinitialize()
 		{			
-			this.bg.CancelAsync();
-			this.bg.Dispose();
+			bg.CancelAsync();
+			bg.Dispose();
 			
-			this.timer.Enabled = false;
-			this.timer.Close();
-			this.timer.Dispose();
+			timer.Enabled = false;
+			timer.Close();
+			timer.Dispose();
 			
-			this.watcher.EnableRaisingEvents = false;
-			this.watcher.Dispose();
+			watcher.EnableRaisingEvents = false;
+			watcher.Dispose();
 			
-			this.bg = null;
-			this.timer = null;
-			this.watcher = null;
+			bg = null;
+			timer = null;
+			watcher = null;
 		}
 		
 		/// <summary>
@@ -123,10 +129,68 @@ namespace TE.Apps.Staging
 			
 			using (Stream s = File.OpenRead(settingsFilePath))
 			{
-				return (SettingsFile)xs.Deserialize (s);
+				return (SettingsFile)xs.Deserialize(s);
 			}
 		}
 		
+
+        /// <summary>
+        /// Gets the number of threads specified in the settings file.
+        /// </summary>
+        /// <returns>
+        /// The number of threads to use to move the files.
+        /// </returns>
+        private int GetThreads()
+        {
+            /// The number of processors
+            int processors = Environment.ProcessorCount;
+            // The actual number of threads to use
+            int actualThreads = 1;
+            // The expected threads as specified in the settings file
+            int expectedThreads = settingsFile.Threads;
+
+            // Check to see if the value is indicating a value that is relative
+            // to the number of processors - for example: -1 would indicate
+            // that the threads should be 1 less than the number or processors
+            if (expectedThreads < 1)
+            {
+                // If the expected threads value is greater than then number
+                // of processors, then default to one thread since you can't
+                // have less than 0 threads
+                if (Math.Abs(expectedThreads) >= processors)
+                {
+                    actualThreads = 1;
+                }
+                else
+                {
+                    // Otherwise calculate the number of threads by adding the
+                    // negative number to the processor count
+                    actualThreads = processors + expectedThreads;
+                }
+            }
+            else
+            {
+                // If the expected threads is greater than the number of
+                // processors, then default the number of threads to equal
+                // the number of processors
+                if (expectedThreads > processors)
+                {
+                    actualThreads = processors;
+                }
+                else
+                {
+                    // Just set the number of threads to the value specified
+                    // in the settings file
+                    actualThreads = expectedThreads;
+                }
+            }
+
+            Logging.WriteLine("Number of threads to use: " + actualThreads.ToString());
+
+            return actualThreads;
+
+        }
+
 		/// <summary>
 		/// Gets the settings from the settings file.
 		/// </summary>
@@ -147,17 +211,15 @@ namespace TE.Apps.Staging
 				locations.Add(location);
 				
 				settings.Locations = locations;
-				//settings.SourceDirectory = string.Empty;
-				//settings.DestinationDirectory = string.Empty;
 				settings.MoveRetryCount = 5;
 				settings.MoveRetryWait = 30;
 				
 				// Save the settings to the file
-				this.SerializeSettings(settingsFilePath, settings);
+				SerializeSettings(settingsFilePath, settings);
 			}
 			
 			// Read the settings from the file
-			return this.DeserializeSettings(settingsFilePath);
+			return DeserializeSettings(settingsFilePath);
 		}
 		
 		/// <summary>
@@ -165,48 +227,48 @@ namespace TE.Apps.Staging
 		/// </summary>
 		private void Initialize()
 		{
-			this.settingsFile = new SettingsFile();
-			this.settingsFile = this.GetSettings();
-			
-			// Initialize the properties
-//			this.SourceFolder = this.settingsFile.SourceDirectory;
-//			this.DestinationFolder = this.settingsFile.DestinationDirectory;
-			
-			this.FileLocations = this.settingsFile.Locations;
-			this.RetryMoveCount = this.settingsFile.MoveRetryCount;
-			this.RetryMoveWait = this.settingsFile.MoveRetryWait;
+            Logging.Delete();
+            settingsFile = new SettingsFile();
+			settingsFile = GetSettings();
+
+            threads = GetThreads();
+
+			// Initialize the properties			
+			FileLocations = settingsFile.Locations;
+			RetryMoveCount = settingsFile.MoveRetryCount;
+			RetryMoveWait = settingsFile.MoveRetryWait;
 			
 			// Initialize the file move queue
-			this.stagingFilesQueue = new Queue();
+			stagingFilesQueue = new ConcurrentQueue<StagingFile>();
 			
 			// Initialize the BackgroundWorker object that will perform the
 			// moving of the staging files
-			this.bg = new BackgroundWorker();			
-			this.bg.WorkerSupportsCancellation = true;
-			this.bg.DoWork += new DoWorkEventHandler(MoveStagingFiles);
-			this.bg.RunWorkerAsync();
+			bg = new BackgroundWorker();			
+			bg.WorkerSupportsCancellation = true;
+			bg.DoWork += new DoWorkEventHandler(MoveStagingFiles);
+			bg.RunWorkerAsync();
 
 			// Initialize the timer that will cleanup any empty directories
 			// in the staging directory
-			this.timer = new System.Timers.Timer();
-			this.timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-			this.timer.Interval = 10000;
-			this.timer.Enabled = true;			
+			timer = new System.Timers.Timer();
+			timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+			timer.Interval = 10000;
+			timer.Enabled = true;			
 			
 			// Initialize the FileSystemWatcher object to watch the staging
 			// directory for changes
-			this.watcher = new FileSystemWatcher();
-			this.watcher.Path = ((Location)this.FileLocations[0]).Source;
-			this.watcher.IncludeSubdirectories = true;
-			this.watcher.NotifyFilter = 
+			watcher = new FileSystemWatcher();
+			watcher.Path = ((Location)FileLocations[0]).Source;
+			watcher.IncludeSubdirectories = true;
+			watcher.NotifyFilter = 
 				NotifyFilters.LastAccess | 
 				NotifyFilters.LastWrite | 
 				NotifyFilters.FileName | 
 				NotifyFilters.DirectoryName;
-			this.watcher.Filter = "*.*";
-			this.watcher.Changed += new FileSystemEventHandler(this.OnChanged);
-			this.watcher.Created += new FileSystemEventHandler(this.OnChanged);
-			this.watcher.EnableRaisingEvents = true;		
+			watcher.Filter = "*.*";
+			watcher.Changed += new FileSystemEventHandler(OnChanged);
+			watcher.Created += new FileSystemEventHandler(OnChanged);
+			watcher.EnableRaisingEvents = true;		
 		}
 
 		/// <summary>
@@ -214,7 +276,7 @@ namespace TE.Apps.Staging
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.ServiceName = MyServiceName;
+			ServiceName = MyServiceName;
 		}
 
 		/// <summary>
@@ -244,7 +306,7 @@ namespace TE.Apps.Staging
 						directory,
 						dt);
 					
-					// Delete folders that were last written to more than 2 minutes ago
+					// Delete folders that were last written to more than 10 minutes ago
 					if (dt < DateTime.Now.AddMinutes(-10))
 					{
 						Directory.Delete(directory, false);
@@ -259,50 +321,57 @@ namespace TE.Apps.Staging
 		/// </summary>
 		private void MoveStagingFiles(object sender, DoWorkEventArgs e)
 		{
-			if (this.bg == null || this.stagingFilesQueue == null)
+			if (bg == null || stagingFilesQueue == null)
 			{
 				return;
 			}
 			
-			while (!this.bg.CancellationPending)
+			while (!bg.CancellationPending)
 			{
-				if (this.stagingFilesQueue.Count > 0)
-				{				
-					while (this.stagingFilesQueue.Count != 0)
-					{	
-						// Get the next file in the queue
-						StagingFile stagingFile = 
-							(StagingFile)this.stagingFilesQueue.Dequeue();
-						
-						int i = 0;					
-						while (i < this.RetryMoveCount)
-						{						
-							try
-							{
-								stagingFile.Move();
-								i = this.RetryMoveCount;
-							}
-							catch (IOException)
-							{
-								// Wait for a specified number of milliseconds
-								// and then increment the retry counter
-								Thread.Sleep(this.RetryMoveWait * 1000);
-								i++;
-								
-								// If the retry copy count reaches the limit,
-								// then re-enqueue the file to try again later
-								if (i == this.RetryMoveCount)
-								{
-									this.stagingFilesQueue.Enqueue(stagingFile);
-								}								
-							}
-						}
-					}
+                // If there are no files in the queue, then sleep for 100ms
+				if (stagingFilesQueue.IsEmpty)
+				{
+                    System.Threading.Thread.Sleep(100);
 				}
 				else
-				{
-					System.Threading.Thread.Sleep(100);
-				}
+				{                    
+                    Parallel.ForEach(
+                        stagingFilesQueue,
+                        new ParallelOptions
+                        {
+                            MaxDegreeOfParallelism = threads
+                        },
+                        q =>
+                        {
+                            // Get the next file in the queue
+                            StagingFile stagingFile = null;
+                            stagingFilesQueue.TryDequeue(out stagingFile);
+
+                            int i = 0;
+                            while (i < RetryMoveCount)
+                            {
+                                try
+                                {
+                                    stagingFile.Move();
+                                    i = RetryMoveCount;
+                                }
+                                catch (IOException)
+                                {
+                                    // Wait for a specified number of milliseconds
+                                    // and then increment the retry counter
+                                    Thread.Sleep(RetryMoveWait * 1000);
+                                    i++;
+
+                                    // If the retry copy count reaches the limit,
+                                    // then re-enqueue the file to try again later
+                                    if (i == RetryMoveCount)
+                                    {
+                                        stagingFilesQueue.Enqueue(stagingFile);
+                                    }
+                                }
+                            }
+                        });
+                }
 			}
 			
 			e.Cancel = true;
@@ -324,7 +393,7 @@ namespace TE.Apps.Staging
 					"The settings file path could not be determined.");
 			}
 			
-			this.SerializeSettings(settingsFilePath, settings);
+			SerializeSettings(settingsFilePath, settings);
 
 		}
 		
@@ -366,14 +435,8 @@ namespace TE.Apps.Staging
 				Environment.GetFolderPath(
 					Environment.SpecialFolder.CommonApplicationData);
 			
-			if (!appDataDirectory.EndsWith(@"\", StringComparison.OrdinalIgnoreCase))
-		    {
-		    	appDataDirectory += @"\";
-		    }
-			
-			string settingsFileDirectory = 
-				appDataDirectory + AppDataDirectoryName + @"\";
-			string settingsFilePath = settingsFileDirectory + SettingsFileName;
+            string settingsFileDirectory = Path.Combine(appDataDirectory, AppDataDirectoryName);
+            string settingsFilePath = Path.Combine(settingsFileDirectory, SettingsFileName);
 			
 			if (!Directory.Exists(settingsFileDirectory))
 			{
@@ -417,13 +480,13 @@ namespace TE.Apps.Staging
 				{
 					// Store both the source and destination paths
 					string sourcePath = 
-						((Location)this.FileLocations[0]).Source;
+						((Location)FileLocations[0]).Source;
 					string destinationPath = 
-						((Location)this.FileLocations[0]).Destination;
+						((Location)FileLocations[0]).Destination;
 					
 					// Get the list of folder name replacements
 					List<Replacement> replacements = 
-						((Location)this.FileLocations[0]).Replacements;
+						((Location)FileLocations[0]).Replacements;
 					
 					// Create the new file path but substituting the source
 					// folder with the destination folder
@@ -442,7 +505,7 @@ namespace TE.Apps.Staging
 					}
 					
 					// Enqueue the file to be moved
-					this.stagingFilesQueue.Enqueue(new StagingFile(
+					stagingFilesQueue.Enqueue(new StagingFile(
 						e.FullPath,
 						newPath));
 				}
@@ -457,7 +520,7 @@ namespace TE.Apps.Staging
 		/// </param>
 		protected override void OnStart(string[] args)
 		{
-			this.Initialize();
+			Initialize();
 		}
 		
 		/// <summary>
@@ -465,7 +528,7 @@ namespace TE.Apps.Staging
 		/// </summary>
 		protected override void OnStop()
 		{
-			this.Deinitialize();
+			Deinitialize();
 		}
 		
 		/// <summary>
@@ -479,7 +542,7 @@ namespace TE.Apps.Staging
 		/// </param>
 		private void OnTimedEvent(object source, ElapsedEventArgs e)
 		{
-			ProcessDirectory(((Location)this.FileLocations[0]).Source);
+			ProcessDirectory(((Location)FileLocations[0]).Source);
 		}				
 		#endregion
 	}

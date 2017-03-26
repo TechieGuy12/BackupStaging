@@ -51,16 +51,19 @@
     <Compile Include="classes\Replacement.cs" />
     <Compile Include="classes\SettingsFile.cs" />
     <Compile Include="classes\StagingFile.cs" />
+    <Compile Include="Logging.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="ProjectInstaller.cs" />
+    <Compile Include="ProjectInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StagingService.cs" />
+    <Compile Include="StagingService.cs">
+      <SubType>Component</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="classes" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

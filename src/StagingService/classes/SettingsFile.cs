@@ -1,12 +1,4 @@
-﻿/*
- * Created by SharpDevelop.
- * User: Paul
- * Date: 12/19/2015
- * Time: 3:32 PM
- * 
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace TE.Apps.Staging
@@ -16,17 +8,7 @@ namespace TE.Apps.Staging
 	/// </summary>
 	public class SettingsFile
 	{
-		#region Properties
-//		/// <summary>
-//		/// Gets or sets the source directory.
-//		/// </summary>
-//		public string SourceDirectory { get; set; }
-//		
-//		/// <summary>
-//		/// Gets or set the destination directory.
-//		/// </summary>
-//		public string DestinationDirectory { get; set; }
-		
+		#region Properties	
 		/// <summary>
 		/// Gets or sets the list of source and destination locations.
 		/// </summary>
@@ -41,6 +23,11 @@ namespace TE.Apps.Staging
 		/// Gets or sets the file retry wait time in seconds.
 		/// </summary>
 		public int MoveRetryWait { get; set; }
+
+        /// <summary>
+        /// Gets or sets the threads to use to execute the copy.
+        /// </summary>
+        public int Threads { get; set; }
 		#endregion
 		
 		#region Constructors
@@ -60,9 +47,10 @@ namespace TE.Apps.Staging
 		/// </summary>
 		private void Initialize()
 		{
-			this.Locations = new List<Location>();
-			this.MoveRetryCount = 5;
-			this.MoveRetryWait = 30;
+			Locations = new List<Location>();
+			MoveRetryCount = 5;
+			MoveRetryWait = 30;
+            Threads = 1;
 		}
 		#endregion
 	}

@@ -74,24 +74,26 @@ namespace TE.Apps.Staging
                 return null;
             }
 
-            using (var sha = new SHA256CryptoServiceProvider())
+            using (FileStream stream = File.OpenRead(filePath))
             {
-                // Set the encoding to UTF8 and computer the hash
-                Encoding enc = Encoding.UTF8;
-                byte[] hash = sha.ComputeHash(enc.GetBytes(filePath));
-
-                // Verify the hash length is greater than zero, otherwise
-                // return a null string
-                if (hash.Length > 0)
+                using (var sha = new SHA256CryptoServiceProvider())
                 {
-                    // Return the file hash
-                    return BitConverter.ToString(hash).Replace("-", string.Empty);;
-                }
-                else
-                {
-                    return null;
-                }
+                    // Compute the hash for the file
+                    byte[] hash = sha.ComputeHash(stream);
 
+                    // Verify the hash length is greater than zero, otherwise
+                    // return a null string
+                    if (hash.Length > 0)
+                    {
+                        // Return the file hash
+                        return BitConverter.ToString(hash).Replace("-", string.Empty); ;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                }
             }
         }
         
@@ -169,7 +171,22 @@ namespace TE.Apps.Staging
 					{
 						File.Delete(SourcePath);										
 					}
-				}
+                    else
+                    {
+                        string sourceHash = GetFilePathHash(SourcePath);
+                        string destinationHash = GetFilePathHash(DestinationPath);
+
+                        string logLine = 
+                            string.Format(
+                                "Hashes don't match: {0}: {1}, {2}: {3}.",
+                                SourcePath,
+                                sourceHash,
+                                DestinationPath,
+                                destinationHash);
+
+                        Logging.WriteLine(logLine);
+                    }
+                }
 				catch
 				{
 					throw;								

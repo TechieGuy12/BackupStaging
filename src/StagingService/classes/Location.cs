@@ -1,12 +1,4 @@
-﻿/*
- * Created by SharpDevelop.
- * User: Paul
- * Date: 1/23/2016
- * Time: 10:33 AM
- * 
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace TE.Apps.Staging

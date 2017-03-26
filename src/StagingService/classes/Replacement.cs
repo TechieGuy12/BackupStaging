@@ -1,12 +1,4 @@
-﻿/*
- * Created by SharpDevelop.
- * User: Paul
- * Date: 1/23/2016
- * Time: 10:35 AM
- * 
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
-using System;
+﻿using System;
 
 namespace TE.Apps.Staging
 {
@@ -28,11 +20,15 @@ namespace TE.Apps.Staging
 		#endregion
 		
 		#region Constructors
+		/// <summary>
+		/// Creates a new instance of the <see cref="TE.Apps.Staging.Replacement"/>
+		/// class
+		/// </summary>
 		private Replacement() {}
 		
 		/// <summary>
 		/// Creates a new instance of the <see cref="TE.Apps.Staging.Replacement"/>
-		/// class.
+		/// class when provided with the source and destination directories.
 		/// </summary>
 		/// <exception cref="System.ArgumentNullException">
 		/// A parameter is null or empty.
@@ -51,7 +47,10 @@ namespace TE.Apps.Staging
 				throw new ArgumentNullException(
 					destinationName, 
 					"The destination name cannot be null or empty.");
-			}			
+			}
+
+			SourceName = sourceName;
+			DestinationName = destinationName;
 		}
 		#endregion
 	}
