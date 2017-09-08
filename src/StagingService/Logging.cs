@@ -34,10 +34,7 @@ namespace TE.Apps.Staging
         {
             using (StreamWriter sw = File.AppendText(GetLogFilePath()))
             {
-                sw.WriteLine(
-                    string.Format("{0:yyyy-MM-dd HH:mm:ss:ffff} {1}",
-                        DateTime.Now,
-                        text));
+                sw.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss:ffff} {text}");
             }
         }
     }

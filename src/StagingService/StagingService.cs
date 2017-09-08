@@ -355,7 +355,7 @@ namespace TE.Apps.Staging
                                     stagingFile.Move();
                                     i = RetryMoveCount;
                                 }
-                                catch (IOException)
+                                catch (Exception ex) when (ex is IOException || ex is FilesNotEqualException)
                                 {
                                     // Wait for a specified number of milliseconds
                                     // and then increment the retry counter

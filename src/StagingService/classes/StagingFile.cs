@@ -177,14 +177,11 @@ namespace TE.Apps.Staging
                         string destinationHash = GetFilePathHash(DestinationPath);
 
                         string logLine = 
-                            string.Format(
-                                "Hashes don't match: {0}: {1}, {2}: {3}.",
-                                SourcePath,
-                                sourceHash,
-                                DestinationPath,
-                                destinationHash);
+                            $"Hashes don't match: {SourcePath}: {sourceHash}, {DestinationPath}: {destinationHash}.";
 
                         Logging.WriteLine(logLine);
+
+                        throw new FilesNotEqualException(logLine);
                     }
                 }
 				catch

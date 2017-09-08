@@ -51,6 +51,7 @@
     <Compile Include="classes\Replacement.cs" />
     <Compile Include="classes\SettingsFile.cs" />
     <Compile Include="classes\StagingFile.cs" />
+    <Compile Include="exceptions\FilesNotEqualException.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProjectInstaller.cs">
